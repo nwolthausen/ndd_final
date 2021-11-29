@@ -19,7 +19,8 @@ When you click the **Knit** button a document will be generated that includes bo
 library(readr)
 read.csv("https://raw.githubusercontent.com/nwolthausen/ndd_final/main/ndd_ada.csv")
 
-#did this work
+library(tidyverse)
+
 
 ```
 
