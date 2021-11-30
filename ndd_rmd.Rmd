@@ -15,11 +15,57 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+Data cleaning and recoding
 ```{r}
 library(readr)
 read.csv("https://raw.githubusercontent.com/nwolthausen/ndd_final/main/ndd_ada.csv")
 
 library(tidyverse)
+library(dplyr)
+
+#removing blank rows
+ndd_ada <-ndd_ada[-c(201:382),]
+
+#recoding of maternal education
+class(ndd_ada$maternal_education)
+factor(ndd_ada$maternal_education, levels = c(0:4), labels = c("None", "Primary", "Secondary", "Vocational", "University"))
+table(ndd_ada$maternal_education)
+
+#new binary variable for maternal education; Primary or less, Secondary or more
+ndd_ada$primary_matedu<- ifelse(ndd_ada$maternal_education==1:2, 0,
+                                ifelse(ndd_ada$maternal_education==3:5, 1, NA))
+
+
+factor(ndd_ada$primary_matedu, levels = c(0,1), labels = c("Primary education or less", "Secondary education or above"))
+
+#recoding of HH income
+factor(hh_income, levels = c(1:4), labels = c("500-1000 Dola Ayisien", "1001-1500 Dola Ayisien", "1501-2000 Dola Ayisien", "2001+ Dola Ayisien"))
+table(hh_income)
+
+#recoding of variables for wealth score
+
+ndd_ada$wi_home<- ifelse(ndd_ada$home==1:2, 1, 
+                         ifelse(ndd_ada$home==3, 0, NA))
+
+#need 
+ndd_ada$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```
