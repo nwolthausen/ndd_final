@@ -72,9 +72,10 @@ ndd_ada$wi_elec<- ifelse(ndd_ada$electricity <=2, 1,
 #floor composition; 1= concrete/ceramic, 0=earth/rocks
 ndd_ada$wi_floor<- ifelse(ndd_ada$house_floor >=2, 1,
                          ifelse(ndd_ada$house_floor ==1, 0, NA))
-#roof composition; 1= aluminum/concrete 0= thatched
-ndd_ada$wi_roof<- ifelse(ndd_ada$house_roof>=2, 1,
-                         ifelse(ndd_ada$house_roof ==1, 0, NA))
+#roof composition; 1= concrete 0= aluminum
+ndd_ada$wi_roof<- ifelse(ndd_ada$house_roof==2, 1,
+                         ifelse(ndd_ada$house_roof ==3, 0, NA))
+table(ndd_ada$wi_roof)
 #toilet type; 1= Pit Latrine With Slab/Ventilated Pit Latrine/Automatic Toilet 0= Pit Latrine Without Slab/Open Holes/Composting Toilet/Bucket Toilet/Hanging Toilet/Bush/GroundRiver/Stream
 ndd_ada$wi_toilet<- ifelse(ndd_ada$toilet_type <=3, 1,
                          ifelse(ndd_ada$toilet_type >=4, 0, NA))
@@ -86,13 +87,67 @@ ndd_ada$wi_toilet<- ifelse(ndd_ada$toilet_type <=3, 1,
 ```{r}
 #creating new dataframe with all variables of interest
 
-work_ndd<- data.frame(ndd_ada$id, ndd_ada$age_months_b, ndd_ada$sex, 
-                      ndd_ada$diarrhea_any_type_b,ndd_ada$diarrhea_days_b,
-                      ndd_ada$primary_matedu, ndd_ada$hh_income, ndd_ada$wi_home, 
-                      ndd_ada$wi_hhpersons, ndd_ada$wi_chkn, ndd_ada$wi_goats_pigs, 
+work_ndd<- data.frame(ndd_ada$id, ndd_ada$age_months_b, ndd_ada$sex,
+                      ndd_ada$primary_matedu, ndd_ada$hh_income, ndd_ada$diarrhea_any_type_b, 
+                      ndd_ada$wi_home, ndd_ada$wi_hhpersons, ndd_ada$wi_chkn, 
                       ndd_ada$wi_cellphone, ndd_ada$wi_elec, ndd_ada$wi_floor, 
                       ndd_ada$wi_fridge, ndd_ada$wi_roof, ndd_ada$wi_toilet, 
                       ndd_ada$wi_tv)
+
+#checking for missing values
+library(VIM) 
+library(mice) 
+library(lattice)
+
+md.pattern(work_ndd, rotate.names=TRUE)
+
+#removing 20 cases due to missing values 
+
+complete_ndd<- na.omit(work_ndd)
+str(complete_ndd)
+```
+
+PCA Wealth Index from binary asset variables
+```{r}
+#new datafram with only variables for pca
+wi_ndd<- complete_ndd[,6:16]
+
+
+#running PCA with variables
+
+pc.ndd<- princomp(wi_ndd, cor = TRUE)
+names(pc.ndd)
+
+#summary
+summary(pc.ndd)
+
+#eigenvalues
+eigenvectors <- pc.ndd$loadings
+eigenvalues <- pc.ndd$sdev *pc.ndd$sdev
+
+round(cor(wi_ndd, pc.ndd$scores), 3)
+
+#creating the index with PCA1 which explains the most variance
+index=pc.ndd$scores[,1]
+
+#PCA1 is broken down into 5 quintiles to represent wealth. 1st quintile represents the least wealthy 20% and 5th quintile is the most wealthy 20%.
+nlab<-c(1,2,3,4,5)
+complete_ndd<-mutate(complete_ndd,WI_quintile=as.factor(cut(index,breaks=5,labels=nlab)))
+
+summary(complete_ndd$WI_quintile)
+
+```
+
+
+```{r}
+
+
+
+
+
+
+
+
 
 
 
