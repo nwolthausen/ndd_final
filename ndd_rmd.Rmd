@@ -26,41 +26,73 @@ library(dplyr)
 #removing blank rows
 ndd_ada <-ndd_ada[-c(201:382),]
 
+
 #recoding of maternal education
-class(ndd_ada$maternal_education)
+
 factor(ndd_ada$maternal_education, levels = c(0:4), labels = c("None", "Primary", "Secondary", "Vocational", "University"))
-table(ndd_ada$maternal_education)
+
 
 #new binary variable for maternal education; Primary or less, Secondary or more
-ndd_ada$primary_matedu<- ifelse(ndd_ada$maternal_education==1:2, 0,
-                                ifelse(ndd_ada$maternal_education==3:5, 1, NA))
+ndd_ada$primary_matedu<- ifelse(ndd_ada$maternal_education<=2, 0,
+                                ifelse(ndd_ada$maternal_education>=3, 1, NA))
 
 
 factor(ndd_ada$primary_matedu, levels = c(0,1), labels = c("Primary education or less", "Secondary education or above"))
 
 #recoding of HH income
-factor(hh_income, levels = c(1:4), labels = c("500-1000 Dola Ayisien", "1001-1500 Dola Ayisien", "1501-2000 Dola Ayisien", "2001+ Dola Ayisien"))
-table(hh_income)
+factor(ndd_ada$hh_income, levels = c(1:4), labels = c("500-1000 Dola Ayisien", "1001-1500 Dola Ayisien", "1501-2000 Dola Ayisien", "2001+ Dola Ayisien"))
 
-#recoding of variables for wealth score
 
-ndd_ada$wi_home<- ifelse(ndd_ada$home==1:2, 1, 
+#recoding of variables for wealth score. 1= Yes, 0= No
+
+#rent/own a home 
+ndd_ada$wi_home<- ifelse(ndd_ada$home<=2, 1, 
                          ifelse(ndd_ada$home==3, 0, NA))
+#number of people in househole; less than 5, more than 6 
+ndd_ada$wi_hhpersons<- ifelse(ndd_ada$number_living_hh<=5, 1,
+                              ifelse(ndd_ada$number_living_hh>=6, 0, NA))
+#own chickens
+ndd_ada$wi_chkn<- ifelse(ndd_ada$chicken...33<=2, 1,
+                         ifelse(ndd_ada$chicken...33==3, 0, NA))
+#own goats or pigs
+ndd_ada$wi_goats_pigs<- ifelse(ndd_ada$goats_pigs <=2, 1,
+                         ifelse(ndd_ada$goats_pigs==3, 0, NA))
+#own cellphone
+ndd_ada$wi_cellphone<- ifelse(ndd_ada$telephone <=2, 1,
+                         ifelse(ndd_ada$telephone ==3, 0, NA))
+#own tv
+ndd_ada$wi_tv<- ifelse(ndd_ada$tv <=2, 1,
+                         ifelse(ndd_ada$tv ==3, 0, NA))
+#own fridge
+ndd_ada$wi_fridge<- ifelse(ndd_ada$refrigerator <=2, 1,
+                         ifelse(ndd_ada$refrigerator ==3, 0, NA))
+#have access to electricity
+ndd_ada$wi_elec<- ifelse(ndd_ada$electricity <=2, 1,
+                         ifelse(ndd_ada$electricity ==3, 0, NA))
+#floor composition; 1= concrete/ceramic, 0=earth/rocks
+ndd_ada$wi_floor<- ifelse(ndd_ada$house_floor >=2, 1,
+                         ifelse(ndd_ada$house_floor ==1, 0, NA))
+#roof composition; 1= aluminum/concrete 0= thatched
+ndd_ada$wi_roof<- ifelse(ndd_ada$house_roof>=2, 1,
+                         ifelse(ndd_ada$house_roof ==1, 0, NA))
+#toilet type; 1= Pit Latrine With Slab/Ventilated Pit Latrine/Automatic Toilet 0= Pit Latrine Without Slab/Open Holes/Composting Toilet/Bucket Toilet/Hanging Toilet/Bush/GroundRiver/Stream
+ndd_ada$wi_toilet<- ifelse(ndd_ada$toilet_type <=3, 1,
+                         ifelse(ndd_ada$toilet_type >=4, 0, NA))
 
-#need 
-ndd_ada$
+
+```
 
 
+```{r}
+#creating new dataframe with all variables of interest
 
-
-
-
-
-
-
-
-
-
+work_ndd<- data.frame(ndd_ada$id, ndd_ada$age_months_b, ndd_ada$sex, 
+                      ndd_ada$diarrhea_any_type_b,ndd_ada$diarrhea_days_b,
+                      ndd_ada$primary_matedu, ndd_ada$hh_income, ndd_ada$wi_home, 
+                      ndd_ada$wi_hhpersons, ndd_ada$wi_chkn, ndd_ada$wi_goats_pigs, 
+                      ndd_ada$wi_cellphone, ndd_ada$wi_elec, ndd_ada$wi_floor, 
+                      ndd_ada$wi_fridge, ndd_ada$wi_roof, ndd_ada$wi_toilet, 
+                      ndd_ada$wi_tv)
 
 
 
