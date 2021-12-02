@@ -18,29 +18,34 @@ When you click the **Knit** button a document will be generated that includes bo
 Data cleaning and recoding
 ```{r}
 library(readr)
-read.csv("https://raw.githubusercontent.com/nwolthausen/ndd_final/main/ndd_ada.csv")
+ndd_ada <- read_csv("/Users/noahwolthausen/Desktop/vc_ada_final/ndd_ada.csv")
+View(ndd_ada)
 
 library(tidyverse)
 library(dplyr)
 
 #removing blank rows
 ndd_ada <-ndd_ada[-c(201:382),]
+ndd_ada <-ndd_ada[-c(176),]
 
+#make diarrhea a factor
+ndd_ada$diarrhea_any_type_b<- factor(ndd_ada$diarrhea_any_type_b, levels = c(0:1), labels = c("No", "Yes"))
+table(ndd_ada$diarrhea_any_type_b)
 
-#recoding of maternal education
-
-factor(ndd_ada$maternal_education, levels = c(0:4), labels = c("None", "Primary", "Secondary", "Vocational", "University"))
-
+#make sex a factor
+ndd_ada <- ndd_ada %>%
+  mutate(sex = case_when(sex==1 ~ 0, sex==2 ~ 1),
+         sex = factor(sex, 0:1, c("Male", "Female")))
 
 #new binary variable for maternal education; Primary or less, Secondary or more
 ndd_ada$primary_matedu<- ifelse(ndd_ada$maternal_education<=2, 0,
                                 ifelse(ndd_ada$maternal_education>=3, 1, NA))
 
 
-factor(ndd_ada$primary_matedu, levels = c(0,1), labels = c("Primary education or less", "Secondary education or above"))
+ndd_ada$primary_matedu<- factor(ndd_ada$primary_matedu, levels = c(0,1), labels = c("Primary education or less", "Secondary education or above"))
 
 #recoding of HH income
-factor(ndd_ada$hh_income, levels = c(1:4), labels = c("500-1000 Dola Ayisien", "1001-1500 Dola Ayisien", "1501-2000 Dola Ayisien", "2001+ Dola Ayisien"))
+ndd_ada$hh_income<- factor(ndd_ada$hh_income, levels = c(1:4), labels = c("500-1000 Dola Ayisien", "1001-1500 Dola Ayisien", "1501-2000 Dola Ayisien", "2001+ Dola Ayisien"))
 
 
 #recoding of variables for wealth score. 1= Yes, 0= No
@@ -94,6 +99,8 @@ work_ndd<- data.frame(ndd_ada$id, ndd_ada$age_months_b, ndd_ada$sex,
                       ndd_ada$wi_fridge, ndd_ada$wi_roof, ndd_ada$wi_toilet, 
                       ndd_ada$wi_tv)
 
+
+
 #checking for missing values
 library(VIM) 
 library(mice) 
@@ -101,16 +108,24 @@ library(lattice)
 
 md.pattern(work_ndd, rotate.names=TRUE)
 
+print(work_ndd$ndd_ada.diarrhea_any_type_b)
+
 #removing 20 cases due to missing values 
 
 complete_ndd<- na.omit(work_ndd)
 str(complete_ndd)
+
+
+
+
+
+
 ```
 
 PCA Wealth Index from binary asset variables
 ```{r}
 #new datafram with only variables for pca
-wi_ndd<- complete_ndd[,6:16]
+wi_ndd<- complete_ndd[,7:16]
 
 
 #running PCA with variables
@@ -130,8 +145,12 @@ round(cor(wi_ndd, pc.ndd$scores), 3)
 #creating the index with PCA1 which explains the most variance
 index=pc.ndd$scores[,1]
 
+#continuous variable of WI
+complete_ndd<-mutate(complete_ndd,WI_scores=as.numeric(index))
+
 #PCA1 is broken down into 5 quintiles to represent wealth. 1st quintile represents the least wealthy 20% and 5th quintile is the most wealthy 20%.
 nlab<-c(1,2,3,4,5)
+
 complete_ndd<-mutate(complete_ndd,WI_quintile=as.factor(cut(index,breaks=5,labels=nlab)))
 
 #make the wealth index a factor
@@ -140,9 +159,19 @@ factor(complete_ndd$WI_quintile, levels = c(1:5))
 
 summary(complete_ndd$WI_quintile)
 
+#checking distrubtion of wealth scores by diarrhea status
+complete_ndd %>% 
+ggplot(aes(x =  ndd_ada.diarrhea_any_type_b, y = WI_scores)) +
+      geom_boxplot(aes(fill = ndd_ada.diarrhea_any_type_b)) +
+      labs(x = "Diarrhea status", y = "Wealth Index scores") +
+      theme_bw()
+
+
+
+
 ```
 
-Logistic Regression
+Logistic Regression for wealth index scores and wealth index quintiles
 ```{r}
 
 #load packages for logistic regression
@@ -154,24 +183,85 @@ library(car)
 
 
 
-#Logistic regression for diarrhea and wealth
-diarrhealogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile, data = complete_ndd,
+#Logistic regression for diarrhea and wealth scores
+cont_wealthlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_scores, data = complete_ndd,
                     family = "binomial")
-summary(diarrhealogit)
+summary(cont_wealthlogit)
 
 #ORs and 95% CIs
-ORwi<-exp(cbind(OR = coef(diarrhealogit), confint(diarrhealogit))) 
-ORbmi 
+ORwi<-exp(cbind(OR = coef(cont_wealthlogit), confint(cont_wealthlogit))) 
+ORwi 
 
-odds.n.ends(bmiLogit)
+odds.n.ends(cont_wealthlogit)
 
+#testing linearity assumption
+complete_ndd <- complete_ndd %>%
+  mutate(WI_scores.times.logscores = WI_scores * log(WI_scores))
 
+boxTidwellWI_scores <- glm(ndd_ada.diarrhea_any_type_b ~ WI_scores + WI_scores.times.logscores, data=complete_ndd, family="binomial") #Box Tidwell technique
 
+summary(boxTidwellWI_scores)
+#assumption of linearity is met
 
+#check for undue influence
+plot(cont_wealthlogit, which=4, id.n=5, col="red") 
+
+#Although some cases present some influence, they will be left in the model to preserve sample size
+
+#Model fits
+blr_model_fit_stats(cont_wealthlogit)
+
+#Hosmer lemeshow goodness of fit test: a significant p value indicates a bad fit
+blr_test_hosmer_lemeshow(cont_wealthlogit) 
+ #does meet goodness of fit assumption
+
+#Logistic regression with wealth index quintiles
+
+wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile, data = complete_ndd,
+                    family = "binomial")
+summary(wi_quintlogit)
+
+#ORs and 95% CIs
+ORwi<-exp(cbind(OR = coef(wi_quintlogit), confint(wi_quintlogit))) 
+ORwi 
+
+odds.n.ends(wi_quintlogit)
+
+# the odds of having diarrhea for children in the 2nd quintile is 57.6% lower than children in the first quintile, not significant
+# the odds of having diarrhea for children in the 3rd quintile is 51.7% lower than children in the first quintile, not significant
+# the odds of having diarrhea for children in the 4th quintile is 28.2% lower than children in the first quintile, not significant
+# the odds of having diarrhea for children in the 5th quintile is 41.7% lower than children in the first quintile, not significant
 
 
 
 ```
+```{r}
+#Multivariate model with diarrhea as the dependent variable and Wealth index quintiles, maternal education, age and sex as the independent variables
+
+MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex, data = complete_ndd,
+                    family = "binomial")
+summary(MV_wi_quintlogit)
+
+ORwi_MV<-exp(cbind(OR = coef(MV_wi_quintlogit), confint(MV_wi_quintlogit))) 
+ORwi_MV 
+
+odds.n.ends(MV_wi_quintlogit)
+
+#model improves but is not significant
+
+#model with interaction terms
+MV_wi_INTlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex, + WI_quintile*ndd_ada.primary_matedu, data = complete_ndd,
+                    family = "binomial")
+summary(MV_wi_INTlogit)
+
+table(complete_ndd$WI_quintile)
+class(complete_ndd$WI_quintile)
+table(complete_ndd$ndd_ada.primary_matedu)
+class(complete_ndd$ndd_ada.primary_matedu)
+
+```
+
+
 
 ## Including Plots
 
