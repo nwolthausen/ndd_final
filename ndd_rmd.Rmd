@@ -134,20 +134,36 @@ index=pc.ndd$scores[,1]
 nlab<-c(1,2,3,4,5)
 complete_ndd<-mutate(complete_ndd,WI_quintile=as.factor(cut(index,breaks=5,labels=nlab)))
 
+#make the wealth index a factor
+factor(complete_ndd$WI_quintile, levels = c(1:5))
+
+
 summary(complete_ndd$WI_quintile)
 
 ```
 
-
+Logistic Regression
 ```{r}
 
+#load packages for logistic regression
+library(ROCR)
+library(odds.n.ends)
+library(blorr)
+library(lmtest)
+library(car)
 
 
 
+#Logistic regression for diarrhea and wealth
+diarrhealogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile, data = complete_ndd,
+                    family = "binomial")
+summary(diarrhealogit)
 
+#ORs and 95% CIs
+ORwi<-exp(cbind(OR = coef(diarrhealogit), confint(diarrhealogit))) 
+ORbmi 
 
-
-
+odds.n.ends(bmiLogit)
 
 
 
