@@ -238,8 +238,9 @@ odds.n.ends(wi_quintlogit)
 ```{r}
 #Multivariate model with diarrhea as the dependent variable and Wealth index quintiles, maternal education, age and sex as the independent variables
 
-MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex, data = complete_ndd,
-                    family = "binomial")
+MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile  +
+                      ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex,
+                       data = complete_ndd,family = "binomial")
 summary(MV_wi_quintlogit)
 
 ORwi_MV<-exp(cbind(OR = coef(MV_wi_quintlogit), confint(MV_wi_quintlogit))) 
@@ -247,17 +248,20 @@ ORwi_MV
 
 odds.n.ends(MV_wi_quintlogit)
 
+
 #model improves but is not significant
 
 #model with interaction terms
-MV_wi_INTlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex, + WI_quintile*ndd_ada.primary_matedu, data = complete_ndd,
+MV_wi_INTlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.sex*ndd_ada.age_months_b, data = complete_ndd,
                     family = "binomial")
 summary(MV_wi_INTlogit)
 
-table(complete_ndd$WI_quintile)
-class(complete_ndd$WI_quintile)
-table(complete_ndd$ndd_ada.primary_matedu)
-class(complete_ndd$ndd_ada.primary_matedu)
+ORwi_INT<-exp(cbind(OR = coef(MV_wi_INTlogit), confint(MV_wi_INTlogit))) 
+ORwi_MV 
+
+odds.n.ends(MV_wi_INTlogit)
+#all possible interaction terms were ran, none significant
+
 
 ```
 
