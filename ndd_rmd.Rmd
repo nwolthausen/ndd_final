@@ -159,6 +159,35 @@ factor(complete_ndd$WI_quintile, levels = c(1:5))
 
 summary(complete_ndd$WI_quintile)
 
+#table 1 with descriptives
+library(table1)
+
+table1_ndd<- complete_ndd
+table1_ndd$Home<- factor(table1_ndd$ndd_ada.wi_home, levels = c(0,1), labels = c("No", "Yes"))
+table1_ndd$Household_persons<- factor(table1_ndd$ndd_ada.wi_hhpersons, levels = c(0,1), labels = c("6 or more", "5 or less"))
+table1_ndd$Chicken <- factor(table1_ndd$ndd_ada.wi_chkn, levels = c(0,1), labels = c("No", "Yes"))
+table1_ndd$cellphone <- factor(table1_ndd$ndd_ada.wi_cellphone, levels = c(0,1), labels = c("No", "Yes"))
+table1_ndd$elec <- factor(table1_ndd$ndd_ada.wi_elec , levels = c(0,1), labels = c("No", "Yes"))
+table1_ndd$floor <- factor(table1_ndd$ndd_ada.wi_floor , levels = c(0,1), labels = c("Earth/rocks", "Concrete/ceramic"))
+table1_ndd$fridge <- factor(table1_ndd$ndd_ada.wi_fridge , levels = c(0,1), labels = c("No", "Yes"))
+table1_ndd$roof <- factor(table1_ndd$ndd_ada.wi_roof, levels = c(0,1), labels = c("Aluminum", "Concrete"))
+table1_ndd$toilet<- factor(table1_ndd$ndd_ada.wi_toilet, levels = c(0,1), labels = c("No pit latrine", "Pit latrine"))
+table1_ndd$tv <- factor(table1_ndd$ndd_ada.wi_tv, levels = c(0,1), labels = c("No", "Yes"))
+
+
+table1_ndd %>%
+  ndd_table1<- table1(~ndd_ada.age_months_b + ndd_ada.sex + ndd_ada.primary_matedu + 
+         ndd_ada.hh_income + Home + Household_persons + Chicken + cellphone + 
+         elec+ floor + fridge + roof + toilet + tv + WI_quintile|ndd_ada.diarrhea_any_type_b, 
+         overall=F, rowlabelhead = "Variable", footnote='SD = standard deviation',
+         caption= "Table 1: Socioeconomic Determinants of Diarrheal Disease in Haitian Children", data=table1_ndd)
+
+rownames(ndd_table1) = c("Age (months)", "Sex", "Maternal Education", 
+                         "Household Income", "Rent/Own Home", "Chicken(s)", 
+                         "Cellphone", "Access to electricity", "Floor type", 
+                         "Refrigerator", "Roof type", "Toilet type", "Television", "Wealth index quintile*")
+ndd_table1
+
 #checking distrubtion of wealth scores by diarrhea status
 complete_ndd %>% 
 ggplot(aes(x =  ndd_ada.diarrhea_any_type_b, y = WI_scores)) +
@@ -238,7 +267,7 @@ odds.n.ends(wi_quintlogit)
 ```{r}
 #Multivariate model with diarrhea as the dependent variable and Wealth index quintiles, maternal education, age and sex as the independent variables
 
-MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile  +
+MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile  + ndd_ada.hh_income +
                       ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex,
                        data = complete_ndd,family = "binomial")
 summary(MV_wi_quintlogit)
