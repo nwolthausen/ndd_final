@@ -59,9 +59,6 @@ ndd_ada$wi_hhpersons<- ifelse(ndd_ada$number_living_hh<=5, 1,
 #own chickens
 ndd_ada$wi_chkn<- ifelse(ndd_ada$chicken...33<=2, 1,
                          ifelse(ndd_ada$chicken...33==3, 0, NA))
-#own goats or pigs
-ndd_ada$wi_goats_pigs<- ifelse(ndd_ada$goats_pigs <=2, 1,
-                         ifelse(ndd_ada$goats_pigs==3, 0, NA))
 #own cellphone
 ndd_ada$wi_cellphone<- ifelse(ndd_ada$telephone <=2, 1,
                          ifelse(ndd_ada$telephone ==3, 0, NA))
@@ -71,7 +68,7 @@ ndd_ada$wi_tv<- ifelse(ndd_ada$tv <=2, 1,
 #own fridge
 ndd_ada$wi_fridge<- ifelse(ndd_ada$refrigerator <=2, 1,
                          ifelse(ndd_ada$refrigerator ==3, 0, NA))
-#have access to electricity
+#have access to electricity, 1= always/sometimes, 0= never
 ndd_ada$wi_elec<- ifelse(ndd_ada$electricity <=2, 1,
                          ifelse(ndd_ada$electricity ==3, 0, NA))
 #floor composition; 1= concrete/ceramic, 0=earth/rocks
@@ -80,7 +77,7 @@ ndd_ada$wi_floor<- ifelse(ndd_ada$house_floor >=2, 1,
 #roof composition; 1= concrete 0= aluminum
 ndd_ada$wi_roof<- ifelse(ndd_ada$house_roof==2, 1,
                          ifelse(ndd_ada$house_roof ==3, 0, NA))
-table(ndd_ada$wi_roof)
+
 #toilet type; 1= Pit Latrine With Slab/Ventilated Pit Latrine/Automatic Toilet 0= Pit Latrine Without Slab/Open Holes/Composting Toilet/Bucket Toilet/Hanging Toilet/Bush/GroundRiver/Stream
 ndd_ada$wi_toilet<- ifelse(ndd_ada$toilet_type <=3, 1,
                          ifelse(ndd_ada$toilet_type >=4, 0, NA))
@@ -175,17 +172,18 @@ table1_ndd$toilet<- factor(table1_ndd$ndd_ada.wi_toilet, levels = c(0,1), labels
 table1_ndd$tv <- factor(table1_ndd$ndd_ada.wi_tv, levels = c(0,1), labels = c("No", "Yes"))
 
 
-table1_ndd %>%
+
   ndd_table1<- table1(~ndd_ada.age_months_b + ndd_ada.sex + ndd_ada.primary_matedu + 
          ndd_ada.hh_income + Home + Household_persons + Chicken + cellphone + 
          elec+ floor + fridge + roof + toilet + tv + WI_quintile|ndd_ada.diarrhea_any_type_b, 
          overall=F, rowlabelhead = "Variable", footnote='SD = standard deviation',
-         caption= "Table 1: Socioeconomic Determinants of Diarrheal Disease in Haitian Children", data=table1_ndd)
+         caption= "Table 1: Socioeconomic Determinants of Diarrheal Disease in Haitian Children",
+         data=table1_ndd)
 
 rownames(ndd_table1) = c("Age (months)", "Sex", "Maternal Education", 
                          "Household Income", "Rent/Own Home", "Chicken(s)", 
                          "Cellphone", "Access to electricity", "Floor type", 
-                         "Refrigerator", "Roof type", "Toilet type", "Television", "Wealth index quintile*")
+                         "Refrigerator", "Roof type", "Toilet type", "Television", "Wealth index quintile")
 ndd_table1
 
 #checking distrubtion of wealth scores by diarrhea status
@@ -291,6 +289,8 @@ ORwi_MV
 odds.n.ends(MV_wi_INTlogit)
 #all possible interaction terms were ran, none significant
 
+#Testing for multi-colinearity among predictors
+vif(MV_wi_quintlogit)
 
 ```
 
