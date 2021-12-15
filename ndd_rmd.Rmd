@@ -105,17 +105,11 @@ library(lattice)
 
 md.pattern(work_ndd, rotate.names=TRUE)
 
-print(work_ndd$ndd_ada.diarrhea_any_type_b)
 
 #removing 20 cases due to missing values 
 
 complete_ndd<- na.omit(work_ndd)
 str(complete_ndd)
-
-
-
-
-
 
 ```
 
@@ -171,6 +165,24 @@ table1_ndd$roof <- factor(table1_ndd$ndd_ada.wi_roof, levels = c(0,1), labels = 
 table1_ndd$toilet<- factor(table1_ndd$ndd_ada.wi_toilet, levels = c(0,1), labels = c("No pit latrine", "Pit latrine"))
 table1_ndd$tv <- factor(table1_ndd$ndd_ada.wi_tv, levels = c(0,1), labels = c("No", "Yes"))
 
+label(table1_ndd$ndd_ada.diarrhea_any_type_b)<- "Diarrhea"
+label(table1_ndd$Home)<- "Own/Rent home"
+label(table1_ndd$Household_persons)<- "Household persons"
+label(table1_ndd$Chicken)<- "Own chickens"
+label(table1_ndd$cellphone)<- "Own/rent cellphone"
+label(table1_ndd$elec)<- "Access to electricity"
+label(table1_ndd$floor)<- "Floor type"
+label(table1_ndd$fridge)<- "Own fridge"
+label(table1_ndd$roof)<- "Roof type"
+label(table1_ndd$toilet)<- "Toilet type"
+label(table1_ndd$tv)<- "Own TV"
+label(table1_ndd$ndd_ada.age_months_b)<- "Age (months)"
+label(table1_ndd$ndd_ada.sex)<- "Sex"
+label(table1_ndd$ndd_ada.primary_matedu)<- "Maternal edu"
+label(table1_ndd$ndd_ada.hh_income)<- "Household income"
+
+
+
 
 
   ndd_table1<- table1(~ndd_ada.age_months_b + ndd_ada.sex + ndd_ada.primary_matedu + 
@@ -180,18 +192,7 @@ table1_ndd$tv <- factor(table1_ndd$ndd_ada.wi_tv, levels = c(0,1), labels = c("N
          caption= "Table 1: Socioeconomic Determinants of Diarrheal Disease in Haitian Children",
          data=table1_ndd)
 
-rownames(ndd_table1) = c("Age (months)", "Sex", "Maternal Education", 
-                         "Household Income", "Rent/Own Home", "Chicken(s)", 
-                         "Cellphone", "Access to electricity", "Floor type", 
-                         "Refrigerator", "Roof type", "Toilet type", "Television", "Wealth index quintile")
 ndd_table1
-
-#checking distrubtion of wealth scores by diarrhea status
-complete_ndd %>% 
-ggplot(aes(x =  ndd_ada.diarrhea_any_type_b, y = WI_scores)) +
-      geom_boxplot(aes(fill = ndd_ada.diarrhea_any_type_b)) +
-      labs(x = "Diarrhea status", y = "Wealth Index scores") +
-      theme_bw()
 
 
 
@@ -207,6 +208,15 @@ library(odds.n.ends)
 library(blorr)
 library(lmtest)
 library(car)
+
+#checking distrubtion of wealth scores by diarrhea status
+complete_ndd %>% 
+ggplot(aes(x =  ndd_ada.diarrhea_any_type_b, y = WI_scores)) +
+      geom_boxplot(aes(fill = ndd_ada.diarrhea_any_type_b)) +
+      labs(x = "Diarrhea status", y = "Wealth Index scores") +
+      theme_bw()
+
+
 
 
 
@@ -263,37 +273,80 @@ odds.n.ends(wi_quintlogit)
 
 ```
 ```{r}
-#Multivariate model with diarrhea as the dependent variable and Wealth index quintiles, maternal education, age and sex as the independent variables
+#Multivariate model with diarrhea as the dependent variable and Wealth index quintiles, maternal education, household income, age and sex as the independent variables
 
-MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile  + ndd_ada.hh_income +
-                      ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex,
+MV_wi_quintlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile +
+                      ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.hh_income + ndd_ada.sex,
                        data = complete_ndd,family = "binomial")
 summary(MV_wi_quintlogit)
-
-ORwi_MV<-exp(cbind(OR = coef(MV_wi_quintlogit), confint(MV_wi_quintlogit))) 
-ORwi_MV 
 
 odds.n.ends(MV_wi_quintlogit)
 
 
-#model improves but is not significant
+#Model is significant but WI is not a significant predictor of diarrhea
 
-#model with interaction terms
-MV_wi_INTlogit<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile + ndd_ada.primary_matedu + ndd_ada.sex*ndd_ada.age_months_b, data = complete_ndd,
-                    family = "binomial")
-summary(MV_wi_INTlogit)
+#When controlling for all other covariates, children whose mothers have a secondary education have 63% decrease in risk for diarrhea compared to those whose mothers have a primary education or less
 
-ORwi_INT<-exp(cbind(OR = coef(MV_wi_INTlogit), confint(MV_wi_INTlogit))) 
-ORwi_MV 
+#When controlling for all other covariates, children whose household income is >2,000 are 5 times the odds of children whose household income is 500-1000 of having diarrhea
 
-odds.n.ends(MV_wi_INTlogit)
-#all possible interaction terms were ran, none significant
-
-#Testing for multi-colinearity among predictors
-vif(MV_wi_quintlogit)
+#when controll for all other covariates, females have a 49% decreased risk of diarrhea compared to males
 
 ```
+```{r}
 
+#model with interaction terms
+MV_wi_INTlogit_age_WI<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile*ndd_ada.age_months_b + ndd_ada.primary_matedu + ndd_ada.sex + ndd_ada.hh_income, data = complete_ndd,
+                    family = "binomial")
+summary(MV_wi_INTlogit_age_WI)
+
+odds.n.ends(MV_wi_INTlogit_age_WI) #Age
+
+MV_wi_INTlogit_sex_WI<- glm(ndd_ada.diarrhea_any_type_b ~ ndd_ada.age_months_b + ndd_ada.primary_matedu + ndd_ada.sex*WI_quintile + ndd_ada.hh_income, data = complete_ndd,
+                    family = "binomial")
+summary(MV_wi_INTlogit_sex_WI)
+
+odds.n.ends(MV_wi_INTlogit_sex_WI) #Sex
+
+MV_wi_INTlogit_edu_WI<- glm(ndd_ada.diarrhea_any_type_b ~ WI_quintile*ndd_ada.primary_matedu + ndd_ada.age_months_b + ndd_ada.sex + ndd_ada.hh_income, data = complete_ndd,
+                    family = "binomial")
+summary(MV_wi_INTlogit_age_WI)
+
+odds.n.ends(MV_wi_INTlogit_edu_WI) #Edu
+
+
+#all possible interaction terms were ran, none significant
+```
+
+```{r}
+#Testing for multi-colinearity among predictors
+vif(MV_wi_quintlogit)
+#no multicolinearity
+
+#influential points
+plot(MV_wi_quintlogit, which=4, id.n=5, col="red") #obs 4 will be removed
+
+cutoff <- 0.05 
+
+obs_no <- as.data.frame(cooks.distance(MV_wi_quintlogit)) %>%
+  mutate(obs_no=row_number()) %>%
+  filter(`cooks.distance(MV_wi_quintlogit)` > cutoff)
+
+MV_wi_quintlogit.modex <- update(MV_wi_quintlogit,subset=c(-obs_no$obs_no))
+summary(MV_wi_quintlogit.modex)
+odds.n.ends(MV_wi_quintlogit.modex)
+
+#no significant change, observation will be left in the model
+```
+
+```{r}
+#Various pseudo R squares, log likelihood, deviance, AIC, BIC
+blr_model_fit_stats(MV_wi_quintlogit)
+
+#Hosmer lemeshow goodness of fit test
+blr_test_hosmer_lemeshow(MV_wi_quintlogit)
+
+#model fits as it should
+```
 
 
 ## Including Plots
