@@ -373,11 +373,13 @@ library(sjmisc)
 library(ggplot2)
 library(table1)
 
-ndd_forestplot<- plot_model(MV_wi_quintlogit, vline.color = "red", sort.est = TRUE, 
-                            show.values =TRUE, value.offset = .3, title = "Diarrhea")
+ndd_forestplot<- plot_model(MV_wi_quintlogit, vline.color = "red", sort.est = TRUE, show.values =TRUE, value.offset = .3, title = "Diarrhea", rm.terms = c("ndd_ada.primary_mateduSecondary education or above", "ndd_ada.age_months_b", "ndd_ada.sexFemale"), axis.title = "Odds ratios *adjusted for maternal education, age, and sex")
+
+
+
 
 ndd_forestplot
-label(ndd_forestplot$labels)
+
 
 #Although not significant, lower SES was associated with a higher risk of diarrhea with the exception of the 4th quintile. SES is a difficult variable to measure in a low-resource context and needs more refined measures. Future research with robust methods and sample sizes is needed to determine whether SES can predict diarrhea
 
